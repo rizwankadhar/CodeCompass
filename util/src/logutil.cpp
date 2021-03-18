@@ -73,7 +73,6 @@ void initbl()
     )
   );
 
-  // Could be replaced with:
   debugFileSink->set_filter(
     bl::trivial::severity <= bl::trivial::info
   );
@@ -89,7 +88,6 @@ void initbl()
     )
   );
 
-  // Could be replaced with:
   errorFileSink->set_filter(
     bl::trivial::severity > bl::trivial::warning
   );
