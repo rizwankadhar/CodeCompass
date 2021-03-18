@@ -4,6 +4,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/attributes.hpp>
 
+namespace bl = boost::log;
+
 namespace cc
 {
 namespace util
@@ -13,23 +15,23 @@ namespace
 {
 
 void logFormatter(
-  const boost::log::record_view& rec, boost::log::formatting_ostream& strm)
+  const bl::record_view& rec, bl::formatting_ostream& strm)
 {
-  auto severity = rec[boost::log::trivial::severity];
+  auto severity = rec[bl::trivial::severity];
 
   if (severity)
   {
     // Set the color
     switch (severity.get())
     {
-      case boost::log::trivial::debug:
+      case bl::trivial::debug:
         strm << "\033[32m";
         break;
-      case boost::log::trivial::warning:
+      case bl::trivial::warning:
         strm << "\033[33m";
         break;
-      case boost::log::trivial::error:
-      case boost::log::trivial::fatal:
+      case bl::trivial::error:
+      case bl::trivial::fatal:
         strm << "\033[31m";
         break;
       default:
@@ -37,10 +39,10 @@ void logFormatter(
     }
   }
 
-  std::string sLevel = boost::log::trivial::to_string(severity.get());
+  std::string sLevel = bl::trivial::to_string(severity.get());
   std::transform(sLevel.begin(), sLevel.end(), sLevel.begin(), ::toupper);
 
-  strm << "[" << sLevel << "] " << rec[boost::log::expressions::smessage];
+  strm << "[" << sLevel << "] " << rec[bl::expressions::smessage];
 
   // Restore the default color
   if (severity)
@@ -51,24 +53,55 @@ void logFormatter(
 
 }
 
-boost::log::trivial::severity_level getSeverityLevel()
+bl::trivial::severity_level getSeverityLevel()
 {
- return boost::log::attribute_cast<
-   boost::log::attributes::mutable_constant<boost::log::trivial::severity_level>>(
-     boost::log::core::get()->get_global_attributes()["Severity"]).get();
+ return bl::attribute_cast<
+   bl::attributes::mutable_constant<bl::trivial::severity_level>>(
+     bl::core::get()->get_global_attributes()["Severity"]).get();
 }
 
-void initLogger()
+void initbl()
 {
-  auto fsSink = boost::log::add_console_log(
-    std::cout,
-    boost::log::keywords::auto_flush = true);
+  // Create file sink for: trace, debug, info
+  auto debugFileSink = bl::add_file_log(
+    bl::keywords::file_name = "debug.log",
+    bl::keywords::auto_flush = true,
+    bl::keywords::format = (
+      bl::expressions::stream
+        << "[" << bl::trivial::severity << "] "
+        << bl::expressions::smessage
+    )
+  );
 
-  fsSink->set_formatter(&logFormatter);
+  // Could be replaced with:
+  debugFileSink->set_filter(
+    bl::trivial::severity <= bl::trivial::info
+  );
+
+  // Create file sink for: warning, error, fatal
+  auto errorFileSink = bl::add_file_log(
+    bl::keywords::file_name = "error.log",
+    bl::keywords::auto_flush = true,
+    bl::keywords::format = (
+      bl::expressions::stream
+        << "[" << bl::trivial::severity << "] "
+        << bl::expressions::smessage
+    )
+  );
+
+  // Could be replaced with:
+  errorFileSink->set_filter(
+    bl::trivial::severity > bl::trivial::warning
+  );
+
+  // Create console sink
+  auto consoleSink = bl::add_console_log(
+    std::cout,
+    bl::keywords::auto_flush = true);
+
+  consoleSink->set_formatter(&logFormatter);
+
 }
 
 } // util
 } // cc
-
-
-
