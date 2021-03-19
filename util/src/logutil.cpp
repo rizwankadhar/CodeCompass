@@ -60,7 +60,7 @@ bl::trivial::severity_level getSeverityLevel()
      bl::core::get()->get_global_attributes()["Severity"]).get();
 }
 
-void initbl()
+void initLogger()
 {
   // Create file sink for: trace, debug, info
   auto debugFileSink = bl::add_file_log(
