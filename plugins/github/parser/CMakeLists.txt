@@ -3,12 +3,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
+  ${PLUGIN_DIR}/model/include
   ${PLUGIN_DIR})
 
 add_library(githubparser SHARED
-  src/githubparser.cpp)
+  src/githubparser.cpp
+  src/githubdataconverter.cpp
+  src/githubdataconverter.h)
 
 target_link_libraries(githubparser
+  githubmodel
   util
   ${Boost_LIBRARIES})
 

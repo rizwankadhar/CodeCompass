@@ -1,6 +1,8 @@
 #ifndef CC_PARSER_GITHUBPARSER_H
 #define CC_PARSER_GITHUBPARSER_H
 
+#include <list>
+
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
 
@@ -12,6 +14,7 @@
 #include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/write.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include <certify/extensions.hpp>
 #include <certify/https_verification.hpp>
@@ -25,6 +28,7 @@ namespace asio = boost::asio;
 namespace ssl = asio::ssl;
 namespace http = boost::beast::http;
 using tcp = boost::asio::ip::tcp;
+namespace pt = boost::property_tree;
 
 typedef tcp::resolver::results_type ResType;
 typedef ssl::stream<tcp::socket> SSLStream;
@@ -38,9 +42,13 @@ public:
   virtual ~GithubParser();
   bool parse() override;
 private:
-  static const std::string commitUri;
+  static const std::list<std::string> uriList;
+
+  std::string _owner;
+  std::string _repoName;
 
   bool accept(const std::string& path_);
+
   ResType resolve(
     asio::io_context& ctx,
     std::string const& hostname);
@@ -55,6 +63,16 @@ private:
     ssl::stream<tcp::socket>& stream,
     boost::string_view hostname,
     boost::string_view uri);
+
+  void processUrl(const std::string url_);
+  std::string createUri(std::string ending_);
+  pt::ptree createPTree(
+    asio::io_context& ctx,
+    ssl::context& ssl_ctx,
+    std::string const& hostname,
+    std::string const& uri);
+  void runClient();
+
 };
   
 } // parser

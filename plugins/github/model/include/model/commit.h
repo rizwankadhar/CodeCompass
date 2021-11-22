@@ -4,17 +4,13 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include <odb/core.hxx>
-
-#include <model/pull.h>
 
 namespace cc
 {
 namespace model
 {
-struct Pull;
 
 #pragma db object
 struct Commit
@@ -28,17 +24,13 @@ struct Commit
   #pragma db not_null
   std::string url;
 
-  #pragma db not_null
-  std::uint64_t userId;
+  std::string user;
 
   #pragma db not_null
   std::string date;
 
-  #pragma db null
-  std::string parent1;
-
-  #pragma db null
-  std::string parent2;
+  #pragma db unordered
+  std::vector<std::string> parents;
 
   #pragma db not_null
   unsigned additions;
@@ -51,9 +43,6 @@ struct Commit
 
   #pragma db not_null
   unsigned comments;
-
-  #pragma db value_not_null inverse(commits)
-  std::vector<std::weak_ptr<Pull>> pulls;
 };
 } // model
 } // cc

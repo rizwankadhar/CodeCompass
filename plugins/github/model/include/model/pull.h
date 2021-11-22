@@ -36,7 +36,7 @@ struct Pull
   std::string url;
 
   #pragma db not_null
-  std::uint64_t userId;
+  std::string user;
 
   #pragma db not_null
   bool isOpen;
@@ -95,7 +95,7 @@ struct Pull
   #pragma db not_null
   unsigned changedFiles;
 
-  #pragma db value_not_null unordered
+  /*#pragma db value_not_null unordered
   std::vector<std::shared_ptr<Label>> labels;
 
   #pragma db value_not_null unordered
@@ -105,7 +105,7 @@ struct Pull
   std::vector<std::shared_ptr<Person>> reviewers;
 
   #pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Commit>> commits;
+  std::vector<std::shared_ptr<Commit>> commits;*/
 };
 } // model
 } // cc

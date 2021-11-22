@@ -8,6 +8,7 @@
 
 #include <odb/core.hxx>
 
+#include <model/milestone.h>
 #include <model/label.h>
 #include <model/person.h>
 
@@ -15,6 +16,7 @@ namespace cc
 {
 namespace model
 {
+struct Milestone;
 struct Label;
 struct Person;
 
@@ -34,7 +36,7 @@ struct Issue
   std::string url;
 
   #pragma db not_null
-  std::uint64_t userId;
+  std::string user;
 
   #pragma db not_null
   bool isOpen;
@@ -48,17 +50,17 @@ struct Issue
   #pragma db null
   std::string closedAt;
 
-  #pragma db null
-  std::uint64_t closedBy;
+  /*#pragma db null
+  unsigned milestone;*/
 
   #pragma db null
-  std::uint64_t milestone;
+  std::shared_ptr<Milestone> milestone;
 
-  #pragma db value_not_null unordered
+  /*#pragma db value_not_null unordered
   std::vector<std::shared_ptr<Label>> labels;
 
   #pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Person>> assignees;
+  std::vector<std::shared_ptr<Person>> assignees;*/
 };
 } // model
 } // cc

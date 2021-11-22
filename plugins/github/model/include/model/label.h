@@ -3,21 +3,14 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
-#include <memory>
 
 #include <odb/core.hxx>
 
-#include <model/issue.h>
-#include <model/pull.h>
 
 namespace cc
 {
 namespace model
 {
-struct Issue;
-struct Pull;
-
 #pragma db object
 struct Label
 {
@@ -29,12 +22,6 @@ struct Label
 
   #pragma db not_null
   std::string description;
-
-  #pragma db value_not_null inverse(labels)
-  std::vector<std::weak_ptr<Issue>> issues;
-
-  #pragma db value_not_null inverse(labels)
-  std::vector<std::weak_ptr<Pull>> pulls;
 };
 } // model
 } // cc
