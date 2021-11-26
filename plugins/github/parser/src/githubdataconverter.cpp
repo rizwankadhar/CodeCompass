@@ -4,10 +4,16 @@
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
 
+#include <model/milestone-odb.hxx>
+#include <model/label-odb.hxx>
+#include <model/person-odb.hxx>
+
 namespace cc
 {
 namespace parser
 {
+GithubDataConverter::GithubDataConverter(ParserContext& ctx) : _ctx(ctx) {}
+
 std::vector<model::Label> GithubDataConverter::ConvertLabels(pt::ptree& ptree)
 {
   std::vector<model::Label> labels;
@@ -48,7 +54,7 @@ std::vector<model::Milestone> GithubDataConverter::ConvertMilestones(pt::ptree& 
   return milestones;
 }
 
-std::vector<std::pair<std::string, unsigned>> GithubDataConverter::ConvertContributors(pt::ptree &ptree)
+std::vector<std::pair<std::string, unsigned>> GithubDataConverter::ConvertContributors(pt::ptree& ptree)
 {
   std::vector<std::pair<std::string, unsigned>>  contributors;
   for (pt::ptree::value_type &contributorData : ptree)
@@ -71,7 +77,7 @@ model::Person GithubDataConverter::ConvertUser(pt::ptree& ptree, unsigned contri
   user.name = ptree.get<std::string>("name");
   user.company = ptree.get<std::string>("company");
   user.contributions = contributions;
-  user.type = (ptree.get<std::string>("type")=="User") ? model::Person::UserType::User : model::Person::UserType::Organization;
+  user.type = ptree.get<std::string>("type");
 
   return user;
 }
@@ -84,17 +90,22 @@ std::vector<model::Commit> GithubDataConverter::ConvertCommits(pt::ptree& ptree)
     model::Commit commit;
 
     commit.sha = commitData.second.get<std::string>("sha");
-    LOG(error) << commit.sha;
     commit.message = commitData.second.get_child("commit").get<std::string>("message");
     commit.url = commitData.second.get<std::string>("html_url");
-    if (!commitData.second.get_child("author").empty())
-    {
-      commit.user = commitData.second.get_child("author").get<std::string>("login");
-    }
     commit.date = commitData.second.get_child("commit").get_child("author").get<std::string>("date");
     commit.comments = commitData.second.get_child("commit").get<unsigned>("comment_count");
 
-    for (auto const parent : commitData.second.get_child("parents"))
+    if (!commitData.second.get_child("author").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              commit.user = (_ctx.db->query_one<model::Person>(
+                odb::query<model::Person>::username == commitData.second.get_child("author").get<std::string>("login")));
+            });
+    }
+
+    for (auto const &parent : commitData.second.get_child("parents"))
     {
       commit.parents.push_back(parent.second.get<std::string>("sha"));
     }
@@ -103,9 +114,9 @@ std::vector<model::Commit> GithubDataConverter::ConvertCommits(pt::ptree& ptree)
   return commits;
 }
 
-std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree &ptree, model::Commit &commit)
+std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree& ptree, model::Commit& commit)
 {
-  LOG(error) << commit.sha << " commit filejai";
+  LOG(info) << "Processing files of commit(" << commit.sha << ").";
   commit.additions = ptree.get_child("stats").get<unsigned>("additions");
   commit.deletions = ptree.get_child("stats").get<unsigned>("deletions");
   commit.changes = ptree.get_child("stats").get<unsigned>("total");
@@ -117,8 +128,8 @@ std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree
 
     commitFile.sha = commitData.second.get<std::string>("sha");
     commitFile.path = commitData.second.get<std::string>("filename");
-    LOG(error) << commitFile.path;
-    commitFile.status = commitData.second.get<std::string>("filename");
+    LOG(debug) << commitFile.path;
+    commitFile.status = commitData.second.get<std::string>("status");
     commitFile.commitSha = commit.sha;
     commitFile.additions = commitData.second.get<unsigned>("additions");
     commitFile.deletions = commitData.second.get<unsigned>("deletions");
@@ -133,49 +144,258 @@ std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree
   return commitFiles;
 }
 
+std::set<std::string> GithubDataConverter::GetNewUsers(pt::ptree& ptree)
+{
+  std::set<std::string> newUsers;
+  for (pt::ptree::value_type &data : ptree)
+  {
+    if (!data.second.get_child("user").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              std::string username = data.second.get_child("user").get<std::string>("login");
+              if (nullptr == (_ctx.db->query_one<model::Person>(
+                odb::query<model::Person>::username == username)))
+              {
+                newUsers.insert(username);
+              }
+            });
+    }
+  }
+  return newUsers;
+}
 
-std::vector<model::Issue> GithubDataConverter::ConvertIssues(pt::ptree &ptree, ParserContext &ctx)
+std::vector<model::Issue> GithubDataConverter::ConvertIssues(pt::ptree& ptree)
 {
   std::vector<model::Issue> issues;
   for (pt::ptree::value_type &issueData : ptree)
   {
-    model::Issue issue;
-
-    issue.number = issueData.second.get<std::uint64_t>("number");
-    issue.title = issueData.second.get<std::string>("title");
-    LOG(error) << issue.title;
-    issue.body = issueData.second.get<std::string>("body");
-    issue.url = issueData.second.get<std::string>("html_url");
-    if (!issueData.second.get_child("user").empty())
+    if (!issueData.second.get_child_optional("pull_request").is_initialized())
     {
-      issue.user = issueData.second.get_child("user").get<std::string>("login");
-    }
-    issue.isOpen = issueData.second.get<std::string>("state") == "open";
+      model::Issue issue;
 
-    issue.createdAt = issueData.second.get<std::string>("created_at");
-    issue.updatedAt = issueData.second.get<std::string>("updated_at");
-    issue.closedAt = issueData.second.get<std::string>("closed_at");
+      issue.number = issueData.second.get<std::uint64_t>("number");
+      issue.title = issueData.second.get<std::string>("title");
+      LOG(info) << issue.title;
+      issue.body = issueData.second.get<std::string>("body");
+      issue.url = issueData.second.get<std::string>("html_url");
+      issue.isOpen = issueData.second.get<std::string>("state") == "open";
+      issue.createdAt = issueData.second.get<std::string>("created_at");
+      issue.updatedAt = issueData.second.get<std::string>("updated_at");
+      issue.closedAt = issueData.second.get<std::string>("closed_at");
 
-    /*if (!issueData.second.get_child("milestone").empty())
-    {
-      issue.milestone = issueData.second.get_child("milestone").get<unsigned>("number");
-    }*/
+      if (!issueData.second.get_child("user").empty())
+      {
+        util::OdbTransaction trans(_ctx.db);
+        trans([&]
+              {
+                issue.user = (_ctx.db->query_one<model::Person>(
+                  odb::query<model::Person>::username == issueData.second.get_child("user").get<std::string>("login")));
+              });
+      }
 
-    if (!issueData.second.get_child("milestone").empty())
-    {
-      util::OdbTransaction trans(ctx.db);
-      trans([&, this]
+      if (!issueData.second.get_child("milestone").empty())
+      {
+        util::OdbTransaction trans(_ctx.db);
+        trans([&]
+              {
+                issue.milestone = (_ctx.db->query_one<model::Milestone>(
+                  odb::query<model::Milestone>::number == issueData.second.get_child("milestone").get<unsigned>("number")));
+              });
+      }
+
+      if (!issueData.second.get_child("labels").empty())
+      {
+        util::OdbTransaction trans(_ctx.db);
+        for (pt::ptree::value_type &labelData: issueData.second.get_child("labels"))
         {
-          typedef odb::query<model::Milestone> query;
-          query q(
-            query::number == issueData.second.get_child("milestone").get<unsigned>("number"));
-          issue.milestone = (ctx.db->query_one<model::Milestone>(q));
-        });
+          LOG(debug) << labelData.second.get<std::string>("name");
+          std::shared_ptr<model::Label> label;
+          trans([&]
+                {
+                  label = (_ctx.db->query_one<model::Label>(
+                    odb::query<model::Label>::id == labelData.second.get<std::uint64_t>("id")));
+                  issue.labels.emplace_back(label);
+                });
+        }
+      }
+      issues.push_back(issue);
     }
-
-    issues.push_back(issue);
   }
   return issues;
+}
+
+std::vector<model::Pull> GithubDataConverter::ConvertPulls(pt::ptree& ptree)
+{
+  std::vector<model::Pull> pulls;
+  for (pt::ptree::value_type &pullData : ptree)
+  {
+    model::Pull pull;
+
+    pull.number = pullData.second.get<std::uint64_t>("number");
+    LOG(info) << pull.number;
+    pull.title = pullData.second.get<std::string>("title");
+    pull.body = pullData.second.get<std::string>("body");
+    pull.url = pullData.second.get<std::string>("html_url");
+    pull.isOpen = pullData.second.get<std::string>("state") == "open";
+    pull.createdAt = pullData.second.get<std::string>("created_at");
+    pull.updatedAt = pullData.second.get<std::string>("updated_at");
+    pull.closedAt = pullData.second.get<std::string>("closed_at");
+    pull.mergedAt = pullData.second.get<std::string>("merged_at");
+
+    if (!pullData.second.get_child("milestone").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              pull.milestone = (_ctx.db->query_one<model::Milestone>(
+                odb::query<model::Milestone>::number == pullData.second.get_child("milestone").get<unsigned>("number")));
+            });
+    }
+
+    if (!pullData.second.get_child("labels").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      for (pt::ptree::value_type &labelData: pullData.second.get_child("labels"))
+      {
+        LOG(debug) << labelData.second.get<std::string>("name");
+        std::shared_ptr<model::Label> label;
+        trans([&]
+              {
+                label = (_ctx.db->query_one<model::Label>(
+                  odb::query<model::Label>::id == labelData.second.get<std::uint64_t>("id")));
+                pull.labels.emplace_back(label);
+              });
+      }
+    }
+    if (!pullData.second.get_child("user").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              pull.user = (_ctx.db->query_one<model::Person>(
+                odb::query<model::Person>::username == pullData.second.get_child("user").get<std::string>("login")));
+            });
+    }
+
+    pull.headLabel = pullData.second.get_child("head").get<std::string>("label");
+    if (!pullData.second.get_child("head").get_child("repo").empty())
+      pull.headRepoId = pullData.second.get_child("head").get_child("repo").get<std::uint64_t>("id");
+    pull.baseLabel = pullData.second.get_child("base").get<std::string>("label");
+    if (!pullData.second.get_child("base").get_child("repo").empty())
+      pull.baseRepoId = pullData.second.get_child("base").get_child("repo").get<std::uint64_t>("id");
+
+    pulls.push_back(pull);
+  }
+  return pulls;
+}
+
+std::vector<model::PullFile> GithubDataConverter::ConvertPullFiles(pt::ptree& ptree, model::Pull& pull)
+{
+    LOG(info) << "Processing files for pull no." << pull.number << ".";
+
+    std::vector<model::PullFile> pullFiles;
+    for (pt::ptree::value_type &pullFileData : ptree)
+    {
+      model::PullFile pullFile;
+
+      pullFile.sha = pullFileData.second.get<std::string>("sha");
+      pullFile.path = pullFileData.second.get<std::string>("filename");
+      LOG(debug) << pullFile.path;
+      pullFile.status = pullFileData.second.get<std::string>("status");
+      pullFile.prNumber = pull.number;
+      pullFile.additions = pullFileData.second.get<unsigned>("additions");
+      pullFile.deletions = pullFileData.second.get<unsigned>("deletions");
+      pullFile.changes = pullFileData.second.get<unsigned>("changes");
+      if (pullFileData.second.get_child_optional("patch").is_initialized())
+      {
+        pullFile.patch = pullFileData.second.get<std::string>("patch");
+      }
+
+      pullFiles.push_back(pullFile);
+    }
+    return pullFiles;
+}
+
+model::Pull GithubDataConverter::ConvertPull(pt::ptree& ptree, model::Pull& pull)
+{
+  //LOG(info) << "Processing stats of pull no." << pull.number << ".";
+  pull.isMerged = ptree.get<std::string>("merged") == "true";
+  pull.mergeable = ptree.get<std::string>("mergeable");
+  pull.mergeableState = ptree.get<std::string>("mergeable_state");
+  pull.comments = ptree.get<unsigned>("comments");
+  pull.reviewComments = ptree.get<unsigned>("review_comments");
+  pull.commitCount = ptree.get<unsigned>("commits");
+  pull.additions = ptree.get<unsigned>("additions");
+  pull.deletions = ptree.get<unsigned>("deletions");
+  pull.changedFiles = ptree.get<unsigned>("changed_files");
+
+  if (!ptree.get_child("merged_by").empty())
+  {
+    util::OdbTransaction trans(_ctx.db);
+    trans([&]
+          {
+            pull.mergedBy = (_ctx.db->query_one<model::Person>(
+              odb::query<model::Person>::username == ptree.get_child("merged_by").get<std::string>("login")));
+          });
+  }
+  return pull;
+}
+
+std::vector<model::Review> GithubDataConverter::ConvertPullReviews(pt::ptree& ptree, model::Pull& pull)
+{
+  std::vector<model::Review> reviews;
+  for (pt::ptree::value_type &reviewData : ptree)
+  {
+    model::Review review;
+
+    review.id = reviewData.second.get<std::uint64_t>("id");
+    review.state = reviewData.second.get<std::string>("state");
+    review.body = reviewData.second.get<std::string>("body");
+    review.submittedAt = reviewData.second.get<std::string>("submitted_at");
+
+    if (!reviewData.second.get_child("user").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              review.user = (_ctx.db->query_one<model::Person>(
+                odb::query<model::Person>::username == reviewData.second.get_child("user").get<std::string>("login")));
+            });
+    }
+    reviews.push_back(review);
+  }
+  return reviews;
+}
+std::vector<model::Comment> GithubDataConverter::ConvertPullComments(pt::ptree& ptree, model::Pull& pull)
+{
+  std::vector<model::Comment> comments;
+  for (pt::ptree::value_type &commentData : ptree)
+  {
+    model::Comment comment;
+
+    comment.id = commentData.second.get<std::uint64_t>("id");
+    comment.pullReviewId = commentData.second.get<std::uint64_t>("pull_request_review_id");
+    comment.diffHunk = commentData.second.get<std::string>("diff_hunk");
+    comment.path = commentData.second.get<std::string>("path");
+    comment.body = commentData.second.get<std::string>("body");
+    comment.createdAt = commentData.second.get<std::string>("created_at");
+    comment.updatedAt = commentData.second.get<std::string>("updated_at");
+
+    if (!commentData.second.get_child("user").empty())
+    {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&]
+            {
+              comment.user = (_ctx.db->query_one<model::Person>(
+                odb::query<model::Person>::username == commentData.second.get_child("user").get<std::string>("login")));
+            });
+    }
+    comments.push_back(comment);
+  }
+  return comments;
+
 }
 
 }

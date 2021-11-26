@@ -6,6 +6,9 @@
 #include <vector>
 
 #include <odb/core.hxx>
+#include <odb/lazy-ptr.hxx>
+
+#include <model/person.h>
 
 namespace cc
 {
@@ -24,12 +27,13 @@ struct Commit
   #pragma db not_null
   std::string url;
 
-  std::string user;
+  #pragma db null
+  odb::lazy_shared_ptr<model::Person> user;
 
   #pragma db not_null
   std::string date;
 
-  #pragma db unordered
+  #pragma db unordered id_column("commit_sha") value_column("parent_sha")
   std::vector<std::string> parents;
 
   #pragma db not_null

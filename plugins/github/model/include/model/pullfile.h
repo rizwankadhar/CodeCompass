@@ -13,14 +13,6 @@ namespace model
 #pragma db object
 struct PullFile
 {
-  enum FileStatus
-  {
-    added,
-    modified,
-    removed,
-    renamed
-  };
-
   #pragma db id auto
   std::uint64_t id;
 
@@ -31,7 +23,7 @@ struct PullFile
   std::string path;
 
   #pragma db not_null
-  FileStatus status;
+  std::string status;
 
   #pragma db not_null
   std::uint64_t prNumber;

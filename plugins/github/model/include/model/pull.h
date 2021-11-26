@@ -7,10 +7,12 @@
 #include <memory>
 
 #include <odb/core.hxx>
+#include <odb/lazy-ptr.hxx>
 
+#include <model/milestone.h>
 #include <model/label.h>
 #include <model/person.h>
-#include <model/commit.h>
+//#include <model/commit.h>
 
 namespace cc
 {
@@ -18,7 +20,7 @@ namespace model
 {
 struct Label;
 struct Person;
-struct Commit;
+//struct Commit;
 
 #pragma db object
 struct Pull
@@ -35,8 +37,8 @@ struct Pull
   #pragma db not_null
   std::string url;
 
-  #pragma db not_null
-  std::string user;
+  #pragma db null
+  odb::lazy_shared_ptr<Person> user;
 
   #pragma db not_null
   bool isOpen;
@@ -54,7 +56,7 @@ struct Pull
   std::string mergedAt;
 
   #pragma db null
-  std::uint64_t milestone;
+  odb::lazy_shared_ptr<Milestone> milestone;
 
   #pragma db not_null
   std::string headLabel;
@@ -72,10 +74,13 @@ struct Pull
   bool isMerged;
 
   #pragma db null
-  bool isMergeable;
+  std::string mergeable;
 
   #pragma db null
-  std::uint64_t mergedBy;
+  std::string mergeableState;
+
+  #pragma db null
+  odb::lazy_shared_ptr<Person> mergedBy;
 
   #pragma db not_null
   unsigned comments;
@@ -95,17 +100,16 @@ struct Pull
   #pragma db not_null
   unsigned changedFiles;
 
-  /*#pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Label>> labels;
+  #pragma db value_not_null unordered id_column("pull_num") value_column("label_id")
+  std::vector<odb::lazy_shared_ptr<Label>> labels;
 
+  /*
   #pragma db value_not_null unordered
   std::vector<std::shared_ptr<Person>> assignees;
 
   #pragma db value_not_null unordered
   std::vector<std::shared_ptr<Person>> reviewers;
-
-  #pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Commit>> commits;*/
+  */
 };
 } // model
 } // cc

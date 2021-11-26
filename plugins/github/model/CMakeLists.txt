@@ -1,4 +1,5 @@
 set(ODB_SOURCES
+        include/model/comment.h
         include/model/commit.h
         include/model/commitfile.h
         include/model/issue.h
@@ -7,7 +8,8 @@ set(ODB_SOURCES
         include/model/person.h
         include/model/pull.h
         include/model/pullfile.h
-        include/model/repository.h)
+        include/model/repository.h
+        include/model/review.h)
 
 generate_odb_files("${ODB_SOURCES}")
 

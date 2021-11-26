@@ -8,29 +8,22 @@
 
 #include <odb/core.hxx>
 
-#include <model/pull.h>
+//#include <model/pull.h>
 
 namespace cc
 {
 namespace model
 {
-struct Pull;
+//struct Pull;
 
 #pragma db object
 struct Person
 {
-  enum UserType
-  {
-    Organization,
-    User,
-    Anonymous
-  };
-
   #pragma db id
   std::string username;
 
   #pragma db not_null
-  UserType type;
+  std::string type;
 
   #pragma db not_null
   std::string url;
@@ -46,7 +39,6 @@ struct Person
 
   /*#pragma db value_not_null inverse(reviewers)
   std::vector<std::weak_ptr<Pull>> reviewedPulls;*/
-  //ez majd marad
 };
 } // model
 } // cc

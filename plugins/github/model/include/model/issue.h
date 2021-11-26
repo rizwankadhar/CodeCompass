@@ -7,6 +7,7 @@
 #include <memory>
 
 #include <odb/core.hxx>
+#include <odb/lazy-ptr.hxx>
 
 #include <model/milestone.h>
 #include <model/label.h>
@@ -35,8 +36,8 @@ struct Issue
   #pragma db not_null
   std::string url;
 
-  #pragma db not_null
-  std::string user;
+  #pragma db null
+  odb::lazy_shared_ptr<model::Person> user;
 
   #pragma db not_null
   bool isOpen;
@@ -50,16 +51,13 @@ struct Issue
   #pragma db null
   std::string closedAt;
 
-  /*#pragma db null
-  unsigned milestone;*/
-
   #pragma db null
-  std::shared_ptr<Milestone> milestone;
+  odb::lazy_shared_ptr<Milestone> milestone;
+
+  #pragma db value_not_null unordered id_column("issue_num") value_column("label_id")
+  std::vector<odb::lazy_shared_ptr<Label>> labels;
 
   /*#pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Label>> labels;
-
-  #pragma db value_not_null unordered
   std::vector<std::shared_ptr<Person>> assignees;*/
 };
 } // model

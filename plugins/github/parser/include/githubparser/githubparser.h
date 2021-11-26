@@ -64,13 +64,17 @@ private:
     boost::string_view hostname,
     boost::string_view uri);
 
-  void processUrl(const std::string url_);
-  std::string createUri(std::string ending_);
+  void processUrl(std::string url_);
+  std::string createUri(std::string const& ending_);
   pt::ptree createPTree(
     asio::io_context& ctx,
     ssl::context& ssl_ctx,
     std::string const& hostname,
     std::string const& uri);
+  void processNewUsers(pt::ptree& ptree,
+                       asio::io_context& ctx,
+                       ssl::context& ssl_ctx,
+                       const std::string& hostname);
   void runClient();
 
 };
