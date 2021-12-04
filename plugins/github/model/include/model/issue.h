@@ -17,9 +17,6 @@ namespace cc
 {
 namespace model
 {
-struct Milestone;
-struct Label;
-struct Person;
 
 #pragma db object
 struct Issue
@@ -57,8 +54,8 @@ struct Issue
   #pragma db value_not_null unordered id_column("issue_num") value_column("label_id")
   std::vector<odb::lazy_shared_ptr<Label>> labels;
 
-  /*#pragma db value_not_null unordered
-  std::vector<std::shared_ptr<Person>> assignees;*/
+  #pragma db value_not_null unordered
+  std::vector<std::shared_ptr<Person>> assignees;
 };
 } // model
 } // cc

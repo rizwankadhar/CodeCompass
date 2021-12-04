@@ -8,8 +8,8 @@ include_directories(
 
 add_library(githubparser SHARED
   src/githubparser.cpp
-  src/githubdataconverter.cpp
-  src/githubdataconverter.h)
+        src/githubdataconverter.cpp
+        src/githubdataconverter.h)
 
 target_link_libraries(githubparser
   githubmodel

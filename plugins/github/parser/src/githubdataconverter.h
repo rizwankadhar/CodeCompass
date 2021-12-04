@@ -44,7 +44,6 @@ public:
   std::vector<model::Review> ConvertPullReviews(pt::ptree& ptree, model::Pull& pull);
   std::vector<model::Comment> ConvertPullComments(pt::ptree& ptree, model::Pull& pull);
   model::Pull ConvertPull(pt::ptree& ptree, model::Pull& pull);
-
 private:
   ParserContext& _ctx;
 };

@@ -13,7 +13,6 @@ namespace cc
 {
 namespace model
 {
-struct Person;
 
 #pragma db object
 struct Review
@@ -29,6 +28,9 @@ struct Review
 
   #pragma db not_null
   std::string body;
+
+  #pragma db not_null
+  std::string url;
 
   #pragma db not_null
   std::string submittedAt;

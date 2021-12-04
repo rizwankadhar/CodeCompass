@@ -8,13 +8,10 @@
 
 #include <odb/core.hxx>
 
-//#include <model/pull.h>
-
 namespace cc
 {
 namespace model
 {
-//struct Pull;
 
 #pragma db object
 struct Person
@@ -37,8 +34,10 @@ struct Person
   #pragma db null
   std::string company;
 
-  /*#pragma db value_not_null inverse(reviewers)
-  std::vector<std::weak_ptr<Pull>> reviewedPulls;*/
+  /*
+  #pragma db value_not_null inverse(reviewers)
+  std::vector<std::weak_ptr<Pull>> reviewedPulls;
+  */
 };
 } // model
 } // cc

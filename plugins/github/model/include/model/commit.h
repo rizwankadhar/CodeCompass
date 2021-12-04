@@ -9,6 +9,7 @@
 #include <odb/lazy-ptr.hxx>
 
 #include <model/person.h>
+#include <model/commitfile.h>
 
 namespace cc
 {
@@ -47,6 +48,9 @@ struct Commit
 
   #pragma db not_null
   unsigned comments;
+
+  #pragma db unordered id_column("commit_sha") value_column("commit_file_id")
+  std::vector<odb::lazy_shared_ptr<CommitFile>> commitFiles;
 };
 } // model
 } // cc
