@@ -2,6 +2,7 @@ include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include
+  ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/webserver/include)
 
 include_directories(SYSTEM
@@ -17,7 +18,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GithubService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/github.thrift
   DEPENDS
@@ -40,6 +41,7 @@ target_compile_options(githubservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(githubservice
   util
+  githubmodel
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   ${ODB_LIBRARIES}
   githubthrift)

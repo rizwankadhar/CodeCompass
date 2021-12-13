@@ -2,6 +2,8 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
 
 #include "githubdataconverter.h"
 
@@ -33,9 +35,15 @@ namespace cc
 namespace parser
 {
 
-
 const std::list<std::string> GithubParser::uriList ({"labels", "milestones", "contributors",
                                                      "commits", "issues", "pulls"});
+
+std::string GithubParser::encode64(const std::string &val) {
+  using namespace boost::archive::iterators;
+  using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
+  auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
+  return tmp.append((3 - val.size() % 3) % 3, '=');
+}
 
 ResType GithubParser::resolve(
   asio::io_context& ctx,
@@ -80,8 +88,7 @@ HTTPResponse GithubParser::get(
   request.keep_alive(false);
   request.set(http::field::host, hostname);
   request.set(http::field::user_agent, "CodeCompass");
-  //temporary token [fix later]
-  request.set(http::field::authorization, "Basic LXUgZGdlY3NlOmdocF9XM3U5QzVEVXdFZkdhaWVHSnRscDhXY0g1UXRqejAxa01Rd0g=");
+  request.set(http::field::authorization, _authString);
   http::write(stream, request);
 
   http::response<http::string_body> response;
@@ -198,7 +205,7 @@ void GithubParser::runClient()
           });
         }
       }
-      /*else if (it == "contributors")
+      else if (it == "contributors")
       {
         for (auto pair : converter.ConvertContributors(ptree))
         {
@@ -207,7 +214,7 @@ void GithubParser::runClient()
               _ctx.db->persist(converter.ConvertUser(userPtree, pair.second));
             });
         }
-      }*/
+      }
       /*else if (it == "commits")
       {
         std::vector<model::Commit> commits = converter.ConvertCommits(ptree);
@@ -226,8 +233,8 @@ void GithubParser::runClient()
             _ctx.db->persist(commit);
           });
         }
-      }*/
-      /*else if (it == "issues")
+      }
+      else if (it == "issues")
       {
         processNewUsers(ptree, ctx, ssl_ctx, hostname);
 
@@ -238,8 +245,8 @@ void GithubParser::runClient()
             _ctx.db->persist(issue);
           });
         }
-      }*/
-      /*else if (it == "pulls")
+      }
+      else if (it == "pulls")
       {
         processNewUsers(ptree, ctx, ssl_ctx, hostname);
 
@@ -250,7 +257,7 @@ void GithubParser::runClient()
           pt::ptree pullFilePtree = createPTree(ctx, ssl_ctx, hostname, createUri(
             it + "/" + std::to_string(pull.number) + "/files?per_page=100&page=" + std::to_string(tempPageNum)));
           while(!pullFilePtree.empty())
-          {
+          {-
             std::vector<model::PullFile> pullFiles = converter.ConvertPullFiles(pullFilePtree, pull);
             for (auto pullFile: pullFiles)
             {
@@ -284,7 +291,7 @@ void GithubParser::runClient()
             tempPageNum++;
             reviewPtree = createPTree(ctx, ssl_ctx, hostname, createUri(
               it + "/" + std::to_string(pull.number) + "/reviews?per_page=100&page=" + std::to_string(tempPageNum)));
-          }
+          }-
 
           tempPageNum = 1;
           pt::ptree commentPtree = createPTree(ctx, ssl_ctx, hostname, createUri(
@@ -348,6 +355,11 @@ bool GithubParser::parse()
     return false;
   }
   processUrl(_ctx.options["repo-url"].as<std::string>());
+
+  _authString = "Basic " +  encode64("-u " + _ctx.options["github-user"].as<std::string>() +
+           ":" +  _ctx.options["github-token"].as<std::string>());
+  LOG(debug) << _authString;
+
   runClient();
 
   return true;
@@ -366,8 +378,10 @@ extern "C"
     boost::program_options::options_description description("Github Plugin");
 
     description.add_options()
-        ("github-arg", po::value<std::string>()->default_value("Github arg"),
-          "This argument will be used by the github parser.")
+        ("github-user", po::value<std::string>(),
+          "Username for authentication to GitHub")
+        ("github-token", po::value<std::string>(),
+         "Token for authentication to GitHub")
         ("repo-url", po::value<std::string>(),
           "URL of the parsed repository.");
 

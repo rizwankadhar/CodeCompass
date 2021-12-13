@@ -46,8 +46,11 @@ private:
 
   std::string _owner;
   std::string _repoName;
+  std::string _authString;
 
   bool accept(const std::string& path_);
+
+  std::string encode64(const std::string& string);
 
   ResType resolve(
     asio::io_context& ctx,

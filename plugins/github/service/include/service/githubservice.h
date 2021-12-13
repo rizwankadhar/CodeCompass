@@ -10,6 +10,13 @@
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
 
+#include <model/person.h>
+#include <model/person-odb.hxx>
+#include <model/pull.h>
+#include <model/pull-odb.hxx>
+#include <model/issue.h>
+#include <model/issue-odb.hxx>
+
 #include <GithubService.h>
 
 namespace cc
@@ -26,6 +33,13 @@ public:
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
+
+  void getContributorList(
+    std::vector<model::Person>& return_);
+  void getPullList(
+    std::vector<model::Pull>& return_);
+  void getIssueList(
+    std::vector<model::Issue>& return_);
 
   void getGithubString(std::string& str_);
 

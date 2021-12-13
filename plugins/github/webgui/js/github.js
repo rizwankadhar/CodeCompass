@@ -39,7 +39,6 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
             this._data.push({
                 id          : 'root',
                 name        : 'List of repositories',
-                cssClass    : 'icon-list',
                 hasChildren : true,
                 getChildren : function () {
                     return that._store.query({ parent : 'root' });
@@ -48,6 +47,16 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
 
             this.set('model', dataModel);
             this.set('openOnClick', false);
+
+            /*//contributor lista?
+            model.githubservice.getContributorList().forEach(function (user) {
+                that._store.put({
+                    id              : user.username,
+                    name            : user.username,
+                    loaded          : true,
+                    parent          : 'root'
+                    })
+                });*/
         }
     });
 
