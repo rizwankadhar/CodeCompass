@@ -35,11 +35,11 @@ typedef ssl::stream<tcp::socket> SSLStream;
 typedef tcp::socket Socket;
 typedef http::response<http::string_body> HTTPResponse;
 
-class GithubParser : public AbstractParser
+class GitHubParser : public AbstractParser
 {
 public:
-  GithubParser(ParserContext& ctx_);
-  virtual ~GithubParser();
+  GitHubParser(ParserContext& ctx_);
+  virtual ~GitHubParser();
   bool parse() override;
 private:
   static const std::list<std::string> uriList;

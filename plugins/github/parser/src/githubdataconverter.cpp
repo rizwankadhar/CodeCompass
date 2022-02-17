@@ -14,9 +14,9 @@ namespace cc
 {
 namespace parser
 {
-GithubDataConverter::GithubDataConverter(ParserContext& ctx) : _ctx(ctx) {}
+GitHubDataConverter::GitHubDataConverter(ParserContext& ctx) : _ctx(ctx) {}
 
-std::vector<model::Label> GithubDataConverter::ConvertLabels(pt::ptree& ptree)
+std::vector<model::Label> GitHubDataConverter::ConvertLabels(pt::ptree& ptree)
 {
   std::vector<model::Label> labels;
   for (pt::ptree::value_type &labelData : ptree)
@@ -32,7 +32,7 @@ std::vector<model::Label> GithubDataConverter::ConvertLabels(pt::ptree& ptree)
   return labels;
 }
 
-std::vector<model::Milestone> GithubDataConverter::ConvertMilestones(pt::ptree& ptree)
+std::vector<model::Milestone> GitHubDataConverter::ConvertMilestones(pt::ptree& ptree)
 {
   std::vector<model::Milestone> milestones;
   for (pt::ptree::value_type &milestoneData : ptree)
@@ -56,7 +56,7 @@ std::vector<model::Milestone> GithubDataConverter::ConvertMilestones(pt::ptree& 
   return milestones;
 }
 
-std::vector<std::pair<std::string, unsigned>> GithubDataConverter::ConvertContributors(pt::ptree& ptree)
+std::vector<std::pair<std::string, unsigned>> GitHubDataConverter::ConvertContributors(pt::ptree& ptree)
 {
   std::vector<std::pair<std::string, unsigned>>  contributors;
   for (pt::ptree::value_type &contributorData : ptree)
@@ -70,7 +70,7 @@ std::vector<std::pair<std::string, unsigned>> GithubDataConverter::ConvertContri
   return contributors;
 }
 
-model::Person GithubDataConverter::ConvertUser(pt::ptree& ptree, unsigned contributions)
+model::Person GitHubDataConverter::ConvertUser(pt::ptree& ptree, unsigned contributions)
 {
   model::Person user;
 
@@ -84,7 +84,7 @@ model::Person GithubDataConverter::ConvertUser(pt::ptree& ptree, unsigned contri
   return user;
 }
 
-std::vector<model::Commit> GithubDataConverter::ConvertCommits(pt::ptree& ptree)
+std::vector<model::Commit> GitHubDataConverter::ConvertCommits(pt::ptree& ptree)
 {
   std::vector<model::Commit> commits;
   for (pt::ptree::value_type &commitData : ptree)
@@ -116,7 +116,7 @@ std::vector<model::Commit> GithubDataConverter::ConvertCommits(pt::ptree& ptree)
   return commits;
 }
 
-std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree& ptree, model::Commit& commit)
+std::vector<model::CommitFile> GitHubDataConverter::ConvertCommitFiles(pt::ptree& ptree, model::Commit& commit)
 {
   LOG(info) << "Processing files of commit(" << commit.sha << ").";
   commit.additions = ptree.get_child("stats").get<unsigned>("additions");
@@ -146,7 +146,7 @@ std::vector<model::CommitFile> GithubDataConverter::ConvertCommitFiles(pt::ptree
   return commitFiles;
 }
 
-std::set<std::string> GithubDataConverter::GetNewUsers(pt::ptree& ptree)
+std::set<std::string> GitHubDataConverter::GetNewUsers(pt::ptree& ptree)
 {
   std::set<std::string> newUsers;
   for (pt::ptree::value_type &data : ptree)
@@ -185,7 +185,7 @@ std::set<std::string> GithubDataConverter::GetNewUsers(pt::ptree& ptree)
   return newUsers;
 }
 
-std::vector<model::Issue> GithubDataConverter::ConvertIssues(pt::ptree& ptree)
+std::vector<model::Issue> GitHubDataConverter::ConvertIssues(pt::ptree& ptree)
 {
   std::vector<model::Issue> issues;
   for (pt::ptree::value_type &issueData : ptree)
@@ -255,7 +255,7 @@ std::vector<model::Issue> GithubDataConverter::ConvertIssues(pt::ptree& ptree)
   return issues;
 }
 
-std::vector<model::Pull> GithubDataConverter::ConvertPulls(pt::ptree& ptree)
+std::vector<model::Pull> GitHubDataConverter::ConvertPulls(pt::ptree& ptree)
 {
   std::vector<model::Pull> pulls;
   for (pt::ptree::value_type &pullData : ptree)
@@ -316,7 +316,7 @@ std::vector<model::Pull> GithubDataConverter::ConvertPulls(pt::ptree& ptree)
   return pulls;
 }
 
-std::vector<model::PullFile> GithubDataConverter::ConvertPullFiles(pt::ptree& ptree, model::Pull& pull)
+std::vector<model::PullFile> GitHubDataConverter::ConvertPullFiles(pt::ptree& ptree, model::Pull& pull)
 {
     LOG(info) << "Processing files for pull no." << pull.number << ".";
 
@@ -343,7 +343,7 @@ std::vector<model::PullFile> GithubDataConverter::ConvertPullFiles(pt::ptree& pt
     return pullFiles;
 }
 
-model::Pull GithubDataConverter::ConvertPull(pt::ptree& ptree, model::Pull& pull)
+model::Pull GitHubDataConverter::ConvertPull(pt::ptree& ptree, model::Pull& pull)
 {
   pull.isMerged = ptree.get<std::string>("merged") == "true";
   pull.mergeable = ptree.get<std::string>("mergeable");
@@ -381,7 +381,7 @@ model::Pull GithubDataConverter::ConvertPull(pt::ptree& ptree, model::Pull& pull
   return pull;
 }
 
-std::vector<model::Review> GithubDataConverter::ConvertPullReviews(pt::ptree& ptree, model::Pull& pull)
+std::vector<model::Review> GitHubDataConverter::ConvertPullReviews(pt::ptree& ptree, model::Pull& pull)
 {
   LOG(debug) << "Processing reviews for pull no." << pull.number << ".";
 
@@ -413,7 +413,7 @@ std::vector<model::Review> GithubDataConverter::ConvertPullReviews(pt::ptree& pt
   return reviews;
 }
 
-std::vector<model::Comment> GithubDataConverter::ConvertPullComments(pt::ptree& ptree, model::Pull& pull)
+std::vector<model::Comment> GitHubDataConverter::ConvertPullComments(pt::ptree& ptree, model::Pull& pull)
 {
   LOG(debug) << "Processing review comments for pull no." << pull.number << ".";
 

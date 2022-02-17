@@ -17,7 +17,7 @@
 #include <model/issue.h>
 #include <model/issue-odb.hxx>
 
-#include <GithubService.h>
+#include "GitHubService.h"
 
 namespace cc
 {
@@ -26,22 +26,22 @@ namespace service
 namespace github
 {
 
-class GithubServiceHandler : virtual public GithubServiceIf
+class GitHubServiceHandler : virtual public GitHubServiceIf
 {
 public:
-  GithubServiceHandler(
+  GitHubServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
   void getContributorList(
-    std::vector<model::Person>& return_);
-  void getPullList(
+    std::vector<Person>& return_) override;
+  /*void getPullList(
     std::vector<model::Pull>& return_);
   void getIssueList(
-    std::vector<model::Issue>& return_);
+    std::vector<model::Issue>& return_);*/
 
-  void getGithubString(std::string& str_);
+  void getGitHubString(std::string& str_);
 
 private:
   std::shared_ptr<odb::database> _db;

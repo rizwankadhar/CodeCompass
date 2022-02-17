@@ -35,17 +35,17 @@ namespace cc
 namespace parser
 {
 
-const std::list<std::string> GithubParser::uriList ({"labels", "milestones", "contributors",
+const std::list<std::string> GitHubParser::uriList ({"labels", "milestones", "contributors",
                                                      "commits", "issues", "pulls"});
 
-std::string GithubParser::encode64(const std::string &val) {
+std::string GitHubParser::encode64(const std::string &val) {
   using namespace boost::archive::iterators;
   using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
   auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
   return tmp.append((3 - val.size() % 3) % 3, '=');
 }
 
-ResType GithubParser::resolve(
+ResType GitHubParser::resolve(
   asio::io_context& ctx,
   std::string const& hostname)
 {
@@ -53,7 +53,7 @@ ResType GithubParser::resolve(
   return resolver.resolve(hostname, "https");
 }
 
-Socket GithubParser::connect(
+Socket GitHubParser::connect(
   asio::io_context& ctx,
   std::string const& hostname)
 {
@@ -62,7 +62,7 @@ Socket GithubParser::connect(
   return socket;
 }
 
-std::unique_ptr<SSLStream> GithubParser::connect(
+std::unique_ptr<SSLStream> GitHubParser::connect(
   asio::io_context& ctx,
   ssl::context& ssl_ctx,
   std::string const& hostname)
@@ -77,7 +77,7 @@ std::unique_ptr<SSLStream> GithubParser::connect(
   return stream;
 }
 
-HTTPResponse GithubParser::get(
+HTTPResponse GitHubParser::get(
   ssl::stream<tcp::socket>& stream,
   boost::string_view hostname,
   boost::string_view uri)
@@ -98,7 +98,7 @@ HTTPResponse GithubParser::get(
   return response;
 }
 
-void GithubParser::processUrl(std::string url_)
+void GitHubParser::processUrl(std::string url_)
 {
   url_.erase(0, url_.find("github"));
   url_.erase(0, url_.find('/') + 1);
@@ -107,12 +107,12 @@ void GithubParser::processUrl(std::string url_)
   _repoName = url_.substr(0, url_.find('/'));
 }
 
-std::string GithubParser::createUri(std::string const& ending_)
+std::string GitHubParser::createUri(std::string const& ending_)
 {
   return "/repos/" + _owner + "/" + _repoName + "/" + ending_;
 }
 
-pt::ptree GithubParser::createPTree(
+pt::ptree GitHubParser::createPTree(
   asio::io_context &ctx,
   ssl::context &ssl_ctx,
   const std::string &hostname,
@@ -133,13 +133,13 @@ pt::ptree GithubParser::createPTree(
   return ptree;
 }
 
-void GithubParser::processNewUsers(
+void GitHubParser::processNewUsers(
   pt::ptree& ptree,
   asio::io_context& ctx,
   ssl::context& ssl_ctx,
   const std::string& hostname)
 {
-  GithubDataConverter converter(_ctx);
+  GitHubDataConverter converter(_ctx);
   std::set<std::string> newUsers = converter.GetNewUsers(ptree);
   for (auto user : newUsers)
   {
@@ -151,9 +151,9 @@ void GithubParser::processNewUsers(
   }
 }
 
-void GithubParser::runClient()
+void GitHubParser::runClient()
 {
-  GithubDataConverter converter(_ctx);
+  GitHubDataConverter converter(_ctx);
   util::OdbTransaction trans(_ctx.db);
 
   asio::io_context ctx;
@@ -329,29 +329,29 @@ void GithubParser::runClient()
 
 }
 
-GithubParser::GithubParser(ParserContext& ctx_): AbstractParser(ctx_)
+GitHubParser::GitHubParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
 }
 
-bool GithubParser::accept(const std::string& path_)
+bool GitHubParser::accept(const std::string& path_)
 {
   std::string ext = boost::filesystem::extension(path_);
   return ext == ".github";
 }
 
-bool GithubParser::parse()
+bool GitHubParser::parse()
 {
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
     if(accept(path))
     {
-      LOG(info) << "GithubParser parse path: " << path;
+      LOG(info) << "GitHubParser parse path: " << path;
     }
   }
 
   if(!_ctx.options.count("repo-url"))
   {
-    LOG(error) << "Missing repository URL. Cannot run Github parser.";
+    LOG(error) << "Missing repository URL. Cannot run GitHub parser.";
     return false;
   }
   processUrl(_ctx.options["repo-url"].as<std::string>());
@@ -365,7 +365,7 @@ bool GithubParser::parse()
   return true;
 }
 
-GithubParser::~GithubParser()
+  GitHubParser::~GitHubParser()
 {
 }
 
@@ -375,7 +375,7 @@ extern "C"
 {
   boost::program_options::options_description getOptions()
   {
-    boost::program_options::options_description description("Github Plugin");
+    boost::program_options::options_description description("GitHub Plugin");
 
     description.add_options()
         ("github-user", po::value<std::string>(),
@@ -388,9 +388,9 @@ extern "C"
     return description;
   }
 
-  std::shared_ptr<GithubParser> make(ParserContext& ctx_)
+  std::shared_ptr<GitHubParser> make(ParserContext& ctx_)
   {
-    return std::make_shared<GithubParser>(ctx_);
+    return std::make_shared<GitHubParser>(ctx_);
   }
 }
 #pragma clang diagnostic pop

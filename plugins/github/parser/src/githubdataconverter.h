@@ -26,10 +26,10 @@ namespace parser
 {
 namespace pt = boost::property_tree;
 
-class GithubDataConverter
+class GitHubDataConverter
 {
 public:
-  GithubDataConverter(ParserContext& ctx);
+  GitHubDataConverter(ParserContext& ctx);
 
   std::vector<model::Label> ConvertLabels(pt::ptree& ptree);
   std::vector<model::Milestone> ConvertMilestones(pt::ptree& ptree);

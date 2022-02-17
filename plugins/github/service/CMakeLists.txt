@@ -14,9 +14,10 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/github_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/github_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/github_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GithubService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GithubService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/githubservice.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/githubservice.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen js
       -o ${CMAKE_CURRENT_BINARY_DIR}
@@ -29,7 +30,7 @@ add_custom_command(
 add_library(githubthrift STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/github_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/github_types.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GithubService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GitHubService.cpp)
 
 target_compile_options(githubthrift PUBLIC -fPIC)
 
@@ -47,3 +48,4 @@ target_link_libraries(githubservice
   githubthrift)
 
 install(TARGETS githubservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_js_thrift()

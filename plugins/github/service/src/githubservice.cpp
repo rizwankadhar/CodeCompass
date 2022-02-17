@@ -11,7 +11,7 @@ namespace service
 namespace github
 {
 
-GithubServiceHandler::GithubServiceHandler(
+GitHubServiceHandler::GitHubServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> /*datadir_*/,
   const cc::webserver::ServerContext& context_)
@@ -19,17 +19,22 @@ GithubServiceHandler::GithubServiceHandler(
 {
 }
 
-void GithubServiceHandler::getContributorList(
-  std::vector<model::Person>& return_)
+void GitHubServiceHandler::getContributorList(
+  std::vector<Person>& return_)
 {
   _transaction([&, this]() {
     odb::result<model::Person> res (_db->query<model::Person>());
-
-    return_.insert(return_.begin(), res.begin(), res.end());
+    for(auto iter = res.begin(); iter!=res.end(); ++iter)
+    {
+      Person p;
+      p.username = iter->username;
+      return_.emplace_back(p);
+      LOG(info) << p.username;
+    }
   });
 }
 
-void GithubServiceHandler::getPullList(
+/*void GitHubServiceHandler::getPullList(
   std::vector<model::Pull>& return_)
 {
   _transaction([&, this]() {
@@ -39,7 +44,7 @@ void GithubServiceHandler::getPullList(
   });
 }
 
-void GithubServiceHandler::getIssueList(
+void GitHubServiceHandler::getIssueList(
   std::vector<model::Issue>& return_)
 {
   _transaction([&, this]() {
@@ -47,11 +52,12 @@ void GithubServiceHandler::getIssueList(
 
     return_.insert(return_.begin(), res.begin(), res.end());
   });
-}
+}*/
 
-void GithubServiceHandler::getGithubString(std::string& str_)
+void GitHubServiceHandler::getGitHubString(std::string& str_)
 {
-  str_ = _config["github-result"].as<std::string>();
+  str_ = "test";
+  //str_ = _config["github-result"].as<std::string>();
 }
 
 } // github

@@ -11,7 +11,10 @@ require([
 function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
     HtmlTree, model, viewHandler) {
 
-    //model.addService('githubservice', 'GitHubService', GitHubServiceClient);
+    model.addService('githubservice', 'GitHubService', GitHubServiceClient);
+    console.log(model.githubservice);
+
+    console.log(model.githubservice.getGitHubString());
 
     var ProjectHostingServiceNavigator = declare(HtmlTree, {
         constructor : function () {
@@ -38,7 +41,7 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
             // ezt a gitNavigator.js-ből vettem, nem kell így hagyni
             this._data.push({
                 id          : 'root',
-                name        : 'List of repositories',
+                name        : 'List of contributors',
                 hasChildren : true,
                 getChildren : function () {
                     return that._store.query({ parent : 'root' });
@@ -48,15 +51,18 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
             this.set('model', dataModel);
             this.set('openOnClick', false);
 
-            /*//contributor lista?
+
+            //contributor lista?
             model.githubservice.getContributorList().forEach(function (user) {
+
                 that._store.put({
                     id              : user.username,
                     name            : user.username,
                     loaded          : true,
                     parent          : 'root'
                     })
-                });*/
+                });
+
         }
     });
 
