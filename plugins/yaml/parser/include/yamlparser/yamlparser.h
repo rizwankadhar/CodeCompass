@@ -33,27 +33,20 @@ private:
 
   util::DirIterCallback getParserCallback();
 
-  std::string getDataFromNode(const std::string &node_, const bool isSeq_);
+  std::string getDataFromNode(
+    const std::string &node_,
+    const bool isSeq_) const;
 
   void getKeyDataFromTree(
     ryml::NodeRef node_,
     ryml::csubstr parent_,
-    std::vector<keyData>& dataVec_);
+    std::vector<keyData>& dataVec_) const;
   
   bool accept(const std::string& path_) const;
 
-  bool isCIFile (std::string const& filename_, std::string const& ending_)
-  {
-    if (filename_.length() >= ending_.length())
-    {
-      return (0 == filename_.compare (
-        filename_.length() - ending_.length(), ending_.length(), ending_));
-    } 
-    else
-    {
-      return false;
-    }
-  }
+  bool isCIFile (
+    std::string const& filename_,
+    std::string const& ending_) const;
 
   void persistData(model::FilePtr file_);
 

@@ -185,9 +185,24 @@ bool YamlParser::accept(const std::string& path_) const
   return ext == ".yaml" || ext == ".yml";
 }
 
+bool YamlParser::isCIFile(
+  std::string const& filename_,
+  std::string const& ending_) const
+{
+  if (filename_.length() >= ending_.length())
+  {
+    return (0 == filename_.compare (
+      filename_.length() - ending_.length(), ending_.length(), ending_));
+  }
+  else
+  {
+    return false;
+  }
+}
+
 std::string YamlParser::getDataFromNode(
   const std::string &node_,
-  const bool isSeq_)
+  const bool isSeq_) const
 {
   std::vector<std::string> children;
   std::stringstream ss(node_);
@@ -217,7 +232,7 @@ std::string YamlParser::getDataFromNode(
 void YamlParser::getKeyDataFromTree(
   ryml::NodeRef node_,
   ryml::csubstr parent_,
-  std::vector<keyData>& dataVec_)
+  std::vector<keyData>& dataVec_) const
 {
   auto getKey = [](ryml::NodeRef node_)
   { 
@@ -286,7 +301,8 @@ void YamlParser::persistData(model::FilePtr file_)
   {
     type = model::Yaml::CI;
   }
-  else if (file_->filename == "docker-compose.yml")
+  else if (file_->filename == "docker-compose.yml" || 
+           file_->filename == "docker-compose.yaml")
   {
     type = model::Yaml::DOCKER_COMPOSE;
   }
