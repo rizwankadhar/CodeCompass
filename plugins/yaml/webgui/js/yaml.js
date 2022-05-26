@@ -35,8 +35,8 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     type : viewHandler.moduleType.Diagram
   });
 
-  var yamlMenu = {
-    id     : 'yamlMenu',
+  var yamlData = {
+    id     : 'yamlData',
     render : function (fileInfo) {
       return new MenuItem({
         label    : 'Yaml',
@@ -51,7 +51,7 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     }
   };
 
-  viewHandler.registerModule(yamlMenu, {
+  viewHandler.registerModule(yamlData, {
     type : viewHandler.moduleType.FileManagerContextMenu
   });
 
@@ -74,8 +74,8 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     type : viewHandler.moduleType.Diagram
   });
 
-  var infobox = {
-    id : 'yamlMenu1',
+  var YamlInfo = {
+    id : 'YamlInfo',
     render : function (fileInfo) {
       return new MenuItem({
         label : 'YamlInfo',
@@ -90,7 +90,7 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     }
   };
 
-  viewHandler.registerModule(infobox, {
+  viewHandler.registerModule(YamlInfo, {
     type :  viewHandler.moduleType.FileManagerContextMenu
   });
 
